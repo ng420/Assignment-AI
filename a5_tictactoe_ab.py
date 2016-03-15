@@ -39,16 +39,24 @@ class board:
         return False
 
 class tic_tac_toe:
+    self.players = ['X', 'O']
     def make_move(self, player, move, board):
         newboard = copy.deepcopy(board)
         newboard.make_move(player, move)
         return newboard
 
     def utility(self, board, player):
-        abstract
+        players = ['X', 'O']
+        for p in players:
+            if board.check_win(p):
+                return 1 if p == player else -1
+        return 0
 
     def terminal_test(self, board):
-        return not board.legal_moves
+        for p in self.players:
+            if board.check_win(p):
+                return True
+        return not board.legal_moves 
 
     def display(self, board):
         board.show()
@@ -60,8 +68,8 @@ class tic_tac_toe:
 def play():
     t = tic_tac_toe()
     b = board(3, 3)
-    player = ['X', 'O']
     to_play = 0
+    player = t.players
     game_over = False
     while not game_over and not t.terminal_test(b):
         x = input()
@@ -76,3 +84,30 @@ def play():
             print player[to_play], 'won'
             game_over = True
         to_play = 1 - to_play
+
+def alphabeta_full_search(board, player, game):
+    def max_value(board, alpha, beta):
+        if game.terminal_test(board):
+            return game.utility(board, player)
+        v = -infinity
+        for (a, s) in game.successors(board):
+            v = max(v, min_value(s, alpha, beta))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    def min_value(board, alpha, beta):
+        if game.terminal_test(board):
+            return game.utility(board, player)
+        v = infinity
+        for (a, s) in game.successors(board):
+            v = min(v, max_value(s, alpha, beta))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
+
+    action, board = argmax(game.successors(board),
+                           lambda ((a, s)): min_value(s, -infinity, infinity))
+    return action
