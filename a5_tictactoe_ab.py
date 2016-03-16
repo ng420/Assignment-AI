@@ -108,6 +108,5 @@ def alphabeta_full_search(board, player, game):
             beta = min(beta, v)
         return v
 
-    action, board = argmax(game.successors(board),
-                           lambda ((a, s)): min_value(s, -infinity, infinity))
+    action, board = argmax(game.successors(board), lambda ((a, s)): min_value(s, -infinity, infinity))
     return action
