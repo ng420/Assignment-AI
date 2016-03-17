@@ -29,6 +29,11 @@ def num_attack(board):
                     r += 1
     return r / 2
 
+def num_non_attack(board):
+    n = len(eval(board))
+    total = (n * (n - 1)) / 2
+    return total - num_attack(board)
+
 def random_restart_hill_climbing(board):
     bestvalue = num_attack(board)
     bestboard = board
@@ -59,9 +64,57 @@ def simulated_annealing(state):
             state = snew
     return state, num_attack(state)
 
+def genetic_algorithm(population):
+    def random_selection(population):
+        max = sum(num_non_attack(individual) for individual in population)
+        pick = random.uniform(0, max)
+        current = 0
+        for individual in population:
+            current += num_non_attack(individual)
+            if current > pick:
+                return individual
+
+    def reproduce(x, y):
+        xm = eval(x)
+        ym = eval(y)
+        n = len(xm)
+        i = random.randint(1, n - 1)
+        return str(xm[:i] + ym[i:])
+
+    def mutate(board):
+        matrix = eval(board)
+        n = len(matrix)
+        col = random.randint(0, n - 1)
+        row = random.randint(0, n - 1)
+        matrix[col] = row
+        return str(matrix)
+
+    # print population
+    prob_mutation = 0.005
+    bestboard = max(population, key = lambda x: num_non_attack(x))
+    bestvalue = num_non_attack(bestboard)
+    for itr in range(100):
+        new_population = []
+        # print itr
+        for i in range(len(population)):
+            x = random_selection(population)
+            y = random_selection(population)
+            child = reproduce(x, y)
+            if prob_mutation > random.random():
+                child = mutate(child)
+            new_population.append(child)
+        population = new_population
+        best = max(population, key = lambda x: num_non_attack(x))
+        if num_non_attack(best) > bestvalue:
+            bestvalue, bestboard = num_non_attack(best), best
+        if num_attack(bestboard) == 0:
+            return bestboard, 0
+    return bestboard, num_attack(bestboard)
+
 # print successors(str([0, 0, 0]))
 # print num_attack(str([0, 1, 1]))
 b = random_board(8)
-print b
-print random_restart_hill_climbing(b)
-print simulated_annealing(b)
+# print b
+# print random_restart_hill_climbing(b)
+# print simulated_annealing(b)
+print genetic_algorithm([random_board(8) for i in range(10)])
