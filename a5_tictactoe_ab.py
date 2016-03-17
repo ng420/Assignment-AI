@@ -1,5 +1,7 @@
 import copy
 
+infinity = float('inf')
+
 class board:
     def __init__(self, h, v):
         self.h = h
@@ -39,7 +41,7 @@ class board:
         return False
 
 class tic_tac_toe:
-    self.players = ['X', 'O']
+    players = ['X', 'O']
     def make_move(self, player, move, board):
         newboard = copy.deepcopy(board)
         newboard.make_move(player, move)
@@ -49,21 +51,21 @@ class tic_tac_toe:
         players = ['X', 'O']
         for p in players:
             if board.check_win(p):
-                return 1 if p == player else -1
+                return 1 if p == 'X' else -1
         return 0
 
     def terminal_test(self, board):
         for p in self.players:
             if board.check_win(p):
                 return True
-        return not board.legal_moves 
+        return len(board.legal_moves()) == 0
 
     def display(self, board):
         board.show()
 
-    def successors(self, board):
-        return [(move, self.make_move(move, board))
-                for move in self.legal_moves(board)]
+    def successors(self, player, board):
+        return [(move, self.make_move(player, move, board))
+                for move in board.legal_moves()]
     
 def play():
     t = tic_tac_toe()
@@ -72,13 +74,19 @@ def play():
     player = t.players
     game_over = False
     while not game_over and not t.terminal_test(b):
-        x = input()
-        y = input()
-        while (x, y) not in b.legal_moves():
-            print 'Invalid move. Try again.'
+        if not to_play:
+            print 'Enter Move'
             x = input()
             y = input()
-        b = t.make_move(player[to_play], (x,y), b)
+            print x, y
+            while (x, y) not in b.legal_moves():
+                print 'Invalid move. Try again.'
+                x = input()
+                y = input()
+            b = t.make_move(player[to_play], (x,y), b)
+        else:
+            print player[to_play]
+            b = alphabeta_full_search(b, player[to_play], t)
         b.show()
         if b.check_win(player[to_play]):
             print player[to_play], 'won'
@@ -86,27 +94,36 @@ def play():
         to_play = 1 - to_play
 
 def alphabeta_full_search(board, player, game):
-    def max_value(board, alpha, beta):
+    def max_value(board, player, alpha, beta):
+        #print len(board.matrix)
         if game.terminal_test(board):
             return game.utility(board, player)
         v = -infinity
-        for (a, s) in game.successors(board):
-            v = max(v, min_value(s, alpha, beta))
+        for (a, s) in game.successors(player, board):
+            v = max(v, min_value(s, 'O' if player == 'X' else 'X', alpha, beta))
             if v >= beta:
                 return v
             alpha = max(alpha, v)
         return v
 
-    def min_value(board, alpha, beta):
+    def min_value(board, player, alpha, beta):
+        #print len(board.matrix)
         if game.terminal_test(board):
             return game.utility(board, player)
         v = infinity
-        for (a, s) in game.successors(board):
-            v = min(v, max_value(s, alpha, beta))
+        for (a, s) in game.successors(player, board):
+            v = min(v, max_value(s, 'O' if player == 'X' else 'X', alpha, beta))
             if v <= alpha:
                 return v
             beta = min(beta, v)
         return v
 
-    action, board = argmax(game.successors(board), lambda ((a, s)): min_value(s, -infinity, infinity))
-    return action
+    dbg = map(lambda ((a, s)): (s, min_value(s, 'O' if player == 'X' else 'X', -infinity, infinity)), game.successors(player, board))
+    #for s, v in dbg:
+        #print v
+        #s.show()
+    action, board = min(game.successors(player, board), key = lambda ((a, s)): min_value(s, 'O' if player == 'X' else 'X', -infinity, infinity))
+    return board
+
+if __name__ == '__main__':
+    play()
