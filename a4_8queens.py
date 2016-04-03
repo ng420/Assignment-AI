@@ -99,7 +99,7 @@ def genetic_algorithm(population):
     prob_mutation = 0.005
     bestboard = max(population, key = lambda x: num_non_attack(x))
     bestvalue = num_non_attack(bestboard)
-    for itr in range(100):
+    for itr in range(500):
         new_population = []
         # print itr
         for i in range(len(population)):
@@ -117,7 +117,6 @@ def genetic_algorithm(population):
 
 # print successors(str([0, 0, 0]))
 # print num_attack(str([0, 1, 1]))
-for it in range(20):
-    b = random_board(8)
-    print b, random_restart_hill_climbing(b), simulated_annealing(b)
+for it in range(1, 21):
+    print genetic_algorithm([random_board(8) for i in range(it * 4)])
 # print genetic_algorithm([random_board(8) for i in range(10)])

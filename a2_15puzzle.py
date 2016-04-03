@@ -26,7 +26,7 @@ def successors(puzzle):
 
 def random_board(goal):
     # generate random number of moves
-    num_moves = random.randint(20, 50)
+    num_moves = random.randint(10, 40)
     board = goal
     for i in range(num_moves):
         board = random.choice(successors(board))
@@ -95,7 +95,8 @@ def man_dist(puzz):
     return d
 
 def rbfs(start, goal, h):
-    return _rbfs(start, goal, 0, h(start), float('inf'), h)
+    ok, fval, gen_count = _rbfs(start, goal, 0, h(start), float('inf'), h)
+    return fval, gen_count
 
 def _rbfs(node, goal, gval, fval, bound, h):
     if node == goal:
@@ -110,8 +111,9 @@ def _rbfs(node, goal, gval, fval, bound, h):
         best = sort_fs[0]
         if fs[best] > bound: 
             return False, fs[best], nodes_generated
-        alt = sort_fs[1] 
-        result, fs[best], n = _rbfs(best, goal, gval + 1, fs[best], min(bound, alt), h)
+        alt = fs[sort_fs[1]]
+        new_bound = min(bound, alt)
+        result, fs[best], n = _rbfs(best, goal, gval + 1, fs[best], new_bound, h)
         nodes_generated += n
         if result != False:
             return result, fs[best], nodes_generated
@@ -119,32 +121,38 @@ def _rbfs(node, goal, gval, fval, bound, h):
 def plot(data1, data2):
     x1, y1 = zip(*data1)
     x2, y2 = zip(*data2)
-    blue_patch = mpatches.Patch(color='blue', label='A*')
+    blue_patch = mpatches.Patch(color='blue', label='RBFS')
     green_patch = mpatches.Patch(color='green', label='IDA*')
     plt.legend(bbox_to_anchor=(1, 1), handles=[blue_patch, green_patch])
     plt.plot(x1, y1, 'bs', x2, y2, 'g^')
     plt.show()
 
+def bad_h(board):
+    h = man_dist(board)
+    v = min(h, 28 - h) # h * h - 24 * h + 144
+    return v
+
 if __name__ == '__main__':
-    ### Test boards with known answers
+    ### a few test boards with known answers
     # puzzle = str([[1, 2, 6, 3], [4, 9, 5, 7], [8, 13, 11, 15], [12, 14, 0, 10]])
     # puzzle = str([[4, 2, 7, 0], [14, 5, 3, 6], [1, 12, 10, 11], [9, 8, 15, 13]])
     # puzzle = str([[1, 2, 3, 7], [4, 5, 6, 11], [9, 10, 15, 14], [8, 12, 13, 0]])    #14
+    # puzzle = str([[1, 8, 2, 3], [4, 5, 11, 7], [12, 9, 6, 10], [0, 13, 14, 15]])    #21
     # puzzle = str([[15, 8, 10, 4], [9, 12, 11, 3], [0, 5, 2, 14], [7, 1, 6, 13]])
     # puzzle = str([[1, 2, 0, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]])
     goal = str([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]])
 
-    as_data = []
+    rb_data = []
     ida_data = []
 
     for it in range(20):
         puzzle = random_board(goal)
-        as_res = astar(puzzle, goal, man_dist)
+        rb = rbfs(puzzle, goal, man_dist)
         ida_res = ida_star(puzzle, goal, man_dist)
-        as_data.append(as_res)
+        # ida_res2 = ida_star(puzzle, goal, bad_h)
+        # rb2 = rbfs(puzzle, goal, bad_h)
+        rb_data.append(rb)
         ida_data.append(ida_res)
-        print puzzle, as_res, ida_res
+        print puzzle, ida_res, rb #, ida_res2, rb2
 
-    plot(as_data, ida_data)
-    # rb = rbfs(puzzle, goal, man_dist)
-    # print rb
+    plot(rb_data, ida_data)
